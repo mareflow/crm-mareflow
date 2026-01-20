@@ -1,18 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maré AutoFlow CRM | Amare Flow</title>
+    <title>Maré AutoFlow CRM | Funil Dinâmico</title>
     
-    <!-- Bibliotecas Externas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* CSS - O ESTILO DO SEU CRM */
         :root {
             --bg-dark: #0b1120;
             --sidebar-bg: #0f172a;
@@ -22,155 +19,70 @@
             --accent-blue: #2563eb;
             --accent-purple: #8b5cf6;
             --border-color: #334155;
+            --column-width: 300px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
         /* Sidebar */
-        aside {
-            width: 70px;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            gap: 30px;
-        }
+        aside { width: 70px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 30px; }
+        aside i { font-size: 24px; color: var(--text-dim); cursor: pointer; }
+        aside i.active { color: var(--accent-blue); }
 
-        aside i { font-size: 24px; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
-        aside i.active, aside i:hover { color: var(--accent-blue); }
+        /* Content Area */
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Main Content */
-        main { flex: 1; display: flex; flex-direction: column; }
-
-        header {
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-        }
-
+        header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .brand h1 { font-size: 20px; letter-spacing: 2px; }
-        .brand h1 span { color: var(--accent-blue); font-weight: 300; }
-        .brand p { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; }
+        .brand h1 span { color: var(--accent-blue); }
+        
+        .header-actions { display: flex; gap: 10px; }
+        .btn-header { padding: 10px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-blue { background: var(--accent-blue); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
 
-        .btn-new {
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+        /* Kanban - Scroll Horizontal */
+        .kanban { flex: 1; display: flex; padding: 20px; gap: 20px; overflow-x: auto; align-items: flex-start; }
+        
+        /* Estilo da Coluna */
+        .column { 
+            min-width: var(--column-width); 
+            max-width: var(--column-width); 
+            background: rgba(15, 23, 42, 0.4); 
+            border-radius: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            max-height: 100%;
+            border: 1px solid transparent;
         }
 
-        /* Kanban Layout */
-        .kanban {
-            flex: 1;
-            display: flex;
-            padding: 20px;
-            gap: 20px;
-            overflow-x: auto;
-        }
-
-        .column {
-            min-width: 320px;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .column-header {
-            padding: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-dim);
+        .column-header { 
+            padding: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
             border-bottom: 1px solid var(--border-color);
         }
 
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
-        .purple { background: var(--accent-purple); }
-        .blue { background: var(--accent-blue); }
-        .orange { background: #f59e0b; }
+        .column-title { font-size: 11px; font-weight: 700; color: var(--text-dim); display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+        .column-header i { cursor: pointer; font-size: 14px; color: var(--text-dim); }
+        .column-header i:hover { color: white; }
 
-        .cards-container {
-            padding: 15px;
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        .cards-container { padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 100px; }
 
-        /* Leads Cards */
-        .card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid var(--border-color);
-            cursor: grab;
-            transition: 0.2s;
-        }
+        /* Card de Lead */
+        .card { background: var(--card-bg); border-radius: 10px; padding: 15px; border: 1px solid var(--border-color); cursor: grab; }
+        .card h3 { font-size: 14px; margin-bottom: 8px; }
+        .card-info { font-size: 11px; color: var(--text-dim); margin-bottom: 12px; }
+        .card-info span { background: #334155; padding: 2px 4px; border-radius: 4px; color: white; margin-left: 5px; }
+        
+        .btn-card-whats { width: 100%; background: #2563eb; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
-        .card:hover { border-color: var(--accent-blue); }
-
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .card-header h3 { font-size: 14px; }
-        .card-header .source { font-size: 10px; color: var(--text-dim); }
-
-        .card-info { font-size: 12px; margin-bottom: 15px; }
-        .card-info span { background: #334155; padding: 2px 5px; border-radius: 4px; font-size: 10px; }
-        .issue { color: var(--text-dim); margin-top: 5px; font-style: italic; }
-
-        .card-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-action {
-            flex: 1;
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: white;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-        .btn-whats { background: var(--accent-blue); border: none; }
-
-        .card-footer {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .price { font-weight: bold; color: var(--accent-blue); font-size: 14px; }
-        .btn-next {
-            width: 100%;
-            background: #2563eb;
-            border: none;
-            color: white;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { height: 8px; width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -180,99 +92,105 @@
         <i class="ph ph-squares-four"></i>
         <i class="ph ph-chart-pie-slice"></i>
         <i class="ph ph-phone"></i>
-        <i class="ph ph-storefront"></i>
     </aside>
 
     <main>
         <header>
             <div class="brand">
-                <h1>AMARE FLOW <span>OFICINA</span></h1>
-                <p>MANAGEMENT & INTELLIGENCE SYSTEM</p>
+                <h1>AMARE FLOW <span>CRM</span></h1>
+                <p>VERTICAL AUTOMOTIVE MANAGEMENT</p>
             </div>
-            <button class="btn-new">+ NOVO VEÍCULO</button>
+            <div class="header-actions">
+                <button class="btn-header btn-outline" onclick="adicionarEtapa()"><i class="ph ph-plus"></i> NOVA ETAPA</button>
+                <button class="btn-header btn-blue">+ NOVO VEÍCULO</button>
+            </div>
         </header>
 
-        <section class="kanban">
-            <div class="column" id="entrada" ondrop="drop(event)" ondragover="allowDrop(event)">
-                <div class="column-header"><span class="dot purple"></span> ENTRADA / ORÇAMENTO</div>
-                <div class="cards-container" id="container-entrada"></div>
-            </div>
-
-            <div class="column" id="negociacao" ondrop="drop(event)" ondragover="allowDrop(event)">
-                <div class="column-header"><span class="dot blue"></span> NEGOCIAÇÃO</div>
-                <div class="cards-container" id="container-negociacao"></div>
-            </div>
-
-            <div class="column" id="agendado" ondrop="drop(event)" ondragover="allowDrop(event)">
-                <div class="column-header"><span class="dot blue"></span> AGENDADO</div>
-                <div class="cards-container" id="container-agendado"></div>
-            </div>
-
-            <div class="column" id="retorno" ondrop="drop(event)" ondragover="allowDrop(event)">
-                <div class="column-header"><span class="dot orange"></span> AGUARDANDO RETORNO</div>
-                <div class="cards-container" id="container-retorno"></div>
-            </div>
+        <section class="kanban" id="kanban-board">
+            <!-- As colunas serão geradas pelo JavaScript -->
         </section>
     </main>
 
     <script>
-        // CONFIGURAÇÕES SUPABASE
-        const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';
-        const SUPABASE_KEY = 'SUA_ANON_KEY_DO_SUPABASE';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // 1. LISTA INICIAL DE ETAPAS (Você pode alterar aqui ou via botão)
+        let etapas = [
+            "ENTRADA", "EM CONVERSAÇÃO", "NÃO RESPONDEU", "AGENDADO", 
+            "NÃO COMPARECEU", "EM ATENDIMENTO", "REMARKETING 01", 
+            "REMARKETING 02", "SERVIÇO FINALIZADO", "SEM INTERAÇÃO"
+        ];
 
-        // 1. FUNÇÃO PARA GERAR O HTML DO CARD
+        // CONFIGURAÇÕES SUPABASE
+        const _supabase = supabase.createClient('SUA_URL', 'SUA_KEY');
+
+        // 2. FUNÇÃO PARA GERAR O BOARD
+        function renderizarBoard() {
+            const board = document.getElementById('kanban-board');
+            board.innerHTML = '';
+
+            etapas.forEach((nome, index) => {
+                const columnId = nome.toLowerCase().replace(/\s+/g, '_');
+                const colHtml = `
+                    <div class="column" id="col-${columnId}" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div class="column-header">
+                            <span class="column-title">
+                                <span class="dot purple"></span> ${nome}
+                            </span>
+                            <i class="ph ph-pencil-simple" onclick="editarEtapa(${index})"></i>
+                        </div>
+                        <div class="cards-container" id="container-${columnId}"></div>
+                    </div>
+                `;
+                board.innerHTML += colHtml;
+            });
+            // Após renderizar as colunas, buscar os leads
+            carregarLeads();
+        }
+
+        // 3. FUNÇÃO PARA ADICIONAR NOVA ETAPA
+        function adicionarEtapa() {
+            const novoNome = prompt("Digite o nome da nova etapa:");
+            if (novoNome) {
+                etapas.push(novoNome);
+                renderizarBoard();
+            }
+        }
+
+        // 4. FUNÇÃO PARA EDITAR NOME DA ETAPA
+        function editarEtapa(index) {
+            const novoNome = prompt("Novo nome para a etapa:", etapas[index]);
+            if (novoNome) {
+                etapas[index] = novoNome;
+                renderizarBoard();
+            }
+        }
+
+        // 5. FUNÇÃO PARA RENDERIZAR CARD
         function renderCard(lead) {
             return `
                 <div class="card" draggable="true" ondragstart="drag(event)" id="lead-${lead.id}">
-                    <div class="card-header">
-                        <h3>${lead.nome}</h3>
-                        <span class="source">${lead.origem}</span>
-                    </div>
+                    <h3>${lead.nome}</h3>
                     <div class="card-info">
-                        <p><i class="ph ph-car"></i> ${lead.veiculo} <span>${lead.placa}</span></p>
-                        <p class="issue">${lead.reclamacao}</p>
+                        <i class="ph ph-car"></i> ${lead.veiculo} <span>${lead.placa}</span>
                     </div>
-                    <div class="card-actions">
-                        <button class="btn-action btn-whats"><i class="ph ph-whatsapp-logo"></i> Chat Whats</button>
-                        <button class="btn-action"><i class="ph ph-shopping-cart"></i> Leilão Peças</button>
-                    </div>
-                    <div class="card-footer">
-                        <span class="price">R$ ${lead.valor_estimado || '0,00'}</span>
-                        <button class="btn-next">PRÓXIMA ETAPA <i class="ph ph-arrows-left-right"></i></button>
-                    </div>
+                    <button class="btn-card-whats"><i class="ph ph-whatsapp-logo"></i> Chat Whats</button>
                 </div>
             `;
         }
 
-        // 2. BUSCAR LEADS INICIAIS
-        async function loadLeads() {
+        // 6. LOGICA DE DADOS (SUPABASE)
+        async function carregarLeads() {
             const { data: leads } = await _supabase.from('leads').select('*');
-            leads.forEach(lead => {
-                const container = document.getElementById(`container-${lead.status}`);
-                if(container) container.innerHTML += renderCard(lead);
-            });
+            if(leads) {
+                leads.forEach(lead => {
+                    const container = document.getElementById(`container-${lead.status}`);
+                    if(container) container.innerHTML += renderCard(lead);
+                });
+            }
         }
 
-        // 3. REALTIME: ESCUTAR WHATSAPP (Via n8n -> Supabase)
-        _supabase
-            .channel('custom-all-channel')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, payload => {
-                const lead = payload.new;
-                const container = document.getElementById('container-entrada');
-                container.insertAdjacentHTML('afterbegin', renderCard(lead));
-                // Aqui você pode tocar um som de notificação!
-            })
-            .subscribe();
-
-        // 4. LÓGICA DE DRAG & DROP
-        function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id);
-        }
-
-        function allowDrop(ev) {
-            ev.preventDefault();
-        }
+        // 7. DRAG AND DROP
+        function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+        function allowDrop(ev) { ev.preventDefault(); }
 
         async function drop(ev) {
             ev.preventDefault();
@@ -284,13 +202,25 @@
                 dropTarget.appendChild(card);
                 const leadId = id.replace('lead-', '');
                 const novoStatus = dropTarget.id.replace('container-', '');
-
-                // Atualiza no Supabase
+                
+                // Atualiza o banco
                 await _supabase.from('leads').update({ status: novoStatus }).eq('id', leadId);
             }
         }
 
-        loadLeads();
+        // Inicia o sistema
+        renderizarBoard();
+
+        // 8. ESCUTANDO O WHATSAPP REALTIME (Para o lead aparecer sozinho)
+        _supabase
+            .channel('leads-realtime')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, payload => {
+                const lead = payload.new;
+                const container = document.getElementById('container-entrada'); // Por padrão cai na entrada
+                if(container) container.insertAdjacentHTML('afterbegin', renderCard(lead));
+            })
+            .subscribe();
+
     </script>
 </body>
 </html>
